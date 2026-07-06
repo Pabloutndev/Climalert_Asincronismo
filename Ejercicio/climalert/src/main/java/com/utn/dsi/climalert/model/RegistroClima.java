@@ -7,10 +7,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 
-/**
- * Registro historico de una consulta climatica. Cada 5 minutos se persiste una
- * instancia con los datos actuales devueltos por WeatherAPI.
- */
 @Entity
 public class RegistroClima {
 
@@ -23,18 +19,10 @@ public class RegistroClima {
     private int humedad;
     private double vientoKph;
     private String condicion;
-
-    /** Fecha/hora local informada por el proveedor. */
     private String fechaHoraLocal;
-
-    /** Momento en que este sistema realizo la consulta. */
     private LocalDateTime consultadoEn;
 
-    /** Marca si ya se genero y notifico una alerta para este registro (evita duplicados). */
-    private boolean alertaEnviada;
-
     protected RegistroClima() {
-        // Requerido por JPA
     }
 
     public RegistroClima(String ubicacion, double temperaturaC, int humedad, double vientoKph,
@@ -46,7 +34,6 @@ public class RegistroClima {
         this.condicion = condicion;
         this.fechaHoraLocal = fechaHoraLocal;
         this.consultadoEn = consultadoEn;
-        this.alertaEnviada = false;
     }
 
     public Long getId() {
@@ -81,11 +68,7 @@ public class RegistroClima {
         return consultadoEn;
     }
 
-    public boolean isAlertaEnviada() {
-        return alertaEnviada;
-    }
-
-    public void marcarAlertaEnviada() {
-        this.alertaEnviada = true;
+    public boolean esCritico(double umbralTemperatura, int umbralHumedad) {
+        return this.temperaturaC > umbralTemperatura && this.humedad > umbralHumedad;
     }
 }

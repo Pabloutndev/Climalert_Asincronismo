@@ -6,13 +6,6 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-/**
- * Punto de entrada de Climalert.
- *
- * <p>El servicio no tiene interfaz grafica: su ciclo de vida esta gobernado por
- * tareas programadas ({@code @EnableScheduling}) y el envio de correos se realiza
- * de forma asincronica ({@code @EnableAsync}), que es el foco de este TP.</p>
- */
 @SpringBootApplication
 @EnableScheduling
 @EnableAsync

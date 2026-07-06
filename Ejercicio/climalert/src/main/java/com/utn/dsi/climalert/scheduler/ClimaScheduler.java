@@ -8,18 +8,6 @@ import org.springframework.stereotype.Component;
 import com.utn.dsi.climalert.service.AlertaService;
 import com.utn.dsi.climalert.service.WeatherService;
 
-/**
- * Nucleo del asincronismo del sistema: define las dos tareas programadas que
- * mantienen a Climalert funcionando de forma autonoma.
- *
- * <ul>
- *   <li>Cada 5 minutos: obtiene y guarda el clima actual.</li>
- *   <li>Cada 1 minuto: analiza el ultimo dato y dispara alertas.</li>
- * </ul>
- *
- * Los intervalos se leen de {@code application.properties} para poder acelerarlos
- * durante las pruebas.
- */
 @Component
 public class ClimaScheduler {
 
@@ -33,14 +21,12 @@ public class ClimaScheduler {
         this.alertaService = alertaService;
     }
 
-    /** Punto 1 del enunciado: obtencion periodica del clima (cada 5 min por defecto). */
     @Scheduled(fixedRateString = "${climalert.scheduling.fetch-rate-ms}")
     public void obtenerClima() {
         log.debug("[Scheduler] Obteniendo clima actual...");
         weatherService.consultarYGuardar();
     }
 
-    /** Punto 2 del enunciado: procesamiento de alertas (cada 1 min por defecto). */
     @Scheduled(fixedRateString = "${climalert.scheduling.alert-rate-ms}")
     public void procesarAlertas() {
         log.debug("[Scheduler] Analizando ultimo registro climatico...");

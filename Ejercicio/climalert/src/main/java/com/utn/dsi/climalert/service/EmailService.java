@@ -5,6 +5,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
@@ -12,58 +13,33 @@ import org.springframework.stereotype.Service;
 
 import com.utn.dsi.climalert.model.RegistroClima;
 
-/**
- * Envia por correo el detalle del clima cuando se genera una alerta.
- *
- * <p>El metodo {@link #enviarAlerta} es {@code @Async}: se ejecuta en un hilo
- * separado para no bloquear la tarea programada que lo dispara. Este es el
- * ejemplo central de asincronismo del TP.</p>
- *
- * <p>Con {@code climalert.mail.enabled=false} el correo no se envia por SMTP
- * sino que se registra en el log, para poder probar el flujo sin un servidor
- * de correo real.</p>
- */
 @Service
 public class EmailService {
 
     private static final Logger log = LoggerFactory.getLogger(EmailService.class);
 
     private final JavaMailSender mailSender;
+    private final String remitente;
 
-    @Value("${climalert.mail.enabled:false}")
-    private boolean mailHabilitado;
-
-    @Value("${climalert.mail.remitente:no-reply@climalert.com}")
-    private String remitente;
-
-    public EmailService(JavaMailSender mailSender) {
+    public EmailService(JavaMailSender mailSender,
+                        @Value("${climalert.mail.remitente:no-reply@climalert.com}") String remitente) {
         this.mailSender = mailSender;
+        this.remitente = remitente;
     }
 
     @Async
     public void enviarAlerta(RegistroClima registro, List<String> destinatarios) {
-        String asunto = "[ALERTA CLIMATICA] " + registro.getUbicacion();
-        String cuerpo = construirCuerpo(registro);
-
-        if (!mailHabilitado) {
-            log.warn("""
-                    [SIMULACION DE CORREO - mail deshabilitado]
-                    Para: {}
-                    Asunto: {}
-                    {}""", destinatarios, asunto, cuerpo);
-            return;
-        }
+        SimpleMailMessage mensaje = new SimpleMailMessage();
+        mensaje.setFrom(remitente);
+        mensaje.setTo(destinatarios.toArray(new String[0]));
+        mensaje.setSubject("[ALERTA CLIMATICA] " + registro.getUbicacion());
+        mensaje.setText(construirCuerpo(registro));
 
         try {
-            SimpleMailMessage mensaje = new SimpleMailMessage();
-            mensaje.setFrom(remitente);
-            mensaje.setTo(destinatarios.toArray(new String[0]));
-            mensaje.setSubject(asunto);
-            mensaje.setText(cuerpo);
             mailSender.send(mensaje);
             log.info("Correo de alerta enviado a {}", destinatarios);
-        } catch (Exception e) {
-            log.error("No se pudo enviar el correo de alerta: {}", e.getMessage());
+        } catch (MailException e) {
+            log.error("No se pudo enviar el correo de alerta a {}: {}", destinatarios, e.getMessage());
         }
     }
 
